@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desvío de Energía: Enfoque y Control</title>
+    <style>
+        /* Base y Tipografía */
+        body {
+            font-family: 'Montserrat', sans-serif; /* Fuente moderna */
+            background-color: #f0f4f8; /* Fondo suave */
+            margin: 0;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .contenedor-juego {
+            width: 95%;
+            max-width: 550px; 
+            background-color: #ffffff;
+            box-shadow: 0 10px 30px rgba(44, 62, 80, 0.15);
+            border-radius: 20px;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        h1 { color: #2c3e50; font-size: 1.8em; margin-bottom: 5px; font-weight: 700; }
+        h2 { color: #34495e; font-size: 1.4em; margin-top: 0; padding-bottom: 10px; border-bottom: 2px solid #ecf0f1; margin-bottom: 20px; }
+        p { color: #5a6a7a; font-size: 1em; margin-bottom: 15px; }
+
+        /* Estructura de Pasos */
+        .paso {
+            background-color: #f9fbfd;
+            border-radius: 15px;
+            padding: 25px 20px;
+            margin-bottom: 25px;
+            border: 1px solid #e0e6ec;
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Componentes de Interfaz */
+        .slider-label {
+            display: block;
+            margin: 15px 0 10px 0;
+            font-weight: 600;
+            color: #e74c3c;
+            font-size: 1.1em;
+        }
+
+        input[type="range"] { 
+            width: 95%; 
+            margin: 10px 0; 
+            cursor: pointer; 
+            -webkit-appearance: none;
+            height: 8px;
+            background: #dfe4e9;
+            border-radius: 5px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.3s, transform 0.1s;
+            margin-top: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-inicio { background-color: #2ecc71; color: white; }
+        .btn-evaluar { background-color: #3498db; color: white; }
+        .btn-reiniciar { background-color: #95a5a6; color: white; }
+
+        .btn:active { transform: translateY(2px); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1); }
+
+        /* Estilos del Minijuego (Fase 2) */
+        #instruccion-juego {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #3498db;
+            min-height: 30px;
+        }
+        #puntuacion-juego {
+            font-size: 1.4em;
+            font-weight: 800;
+            color: #2ecc71;
+            margin-bottom: 10px;
+        }
+        #temporizador-juego {
+            font-size: 3.5em;
+            font-weight: 900;
+            color: #e74c3c;
+            margin: 10px 0 20px 0;
+        }
+
+        /* Área de Cosecha Visual (GRID) */
+        #contenedor-cosecha {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px;
+            width: 100%;
+            margin-top: 15px;
+        }
+        .elemento-cosecha {
+            padding: 20px 10px;
+            border: 3px solid #f39c12;
+            background-color: #fff;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 3em; /* Emojis grandes */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 80px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .elemento-cosecha:hover { 
+            background-color: #fcf3cf; 
+            transform: scale(1.03); 
+        }
+
+        /* Estilo de Resultado (Logro) */
+        #resultado-final {
+            border: 3px solid #2ecc71;
+            background-color: #e8f8f5;
+            padding: 30px;
+            margin-top: 25px;
+            display: none;
+            border-radius: 15px;
+            text-align: left;
+        }
+        #resultado-final h3 { color: #2ecc71; margin-top: 0; font-size: 1.6em; }
+        #resultado-final strong { display: block; margin-top: 8px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor-juego">
+        <h1>🎯 Desvío de Energía: Enfoque</h1>
+        <p>Minijuego interactivo para el control inmediato de tus emociones.</p>
+
+        <div id="paso-1" class="paso">
+            <h2>1. Mide la Intensidad</h2>
+            <p>En una escala de 1 (Calma) a 10 (Máxima), ¿qué tan intensa es tu emoción (Ira o Apatía) ahora?</p>
+            <label id="valor-inicial" class="slider-label">Nivel de Intensidad: 5</label>
+            <input type="range" min="1" max="10" value="5" id="slider-inicio" oninput="document.getElementById('valor-inicial').textContent = 'Nivel de Intensidad: ' + this.value;">
+            <button id="btn-comenzar" class="btn btn-inicio" onclick="comenzarJuego()">¡Empezar Desvío!</button>
+        </div>
+
+        <div id="paso-2" class="paso" style="display: none;">
+            <h2>2. Cosecha Rápida (60 Segundos)</h2>
+            <div id="juego-area">
+                <div id="puntuacion-juego">Aciertos: 0</div>
+                <div id="temporizador-juego">01:00</div>
+                <p id="instruccion-juego">Instrucción: ¡Clica en la figura que tiene la propiedad solicitada!</p>
+                
+                <div id="contenedor-cosecha">
+                    </div>
+            </div>
+
+            <button id="btn-continuar" class="btn btn-evaluar" style="display: none;" onclick="finalizarJuego()">Continuar a la Evaluación</button>
+        </div>
+
+        <div id="paso-3" class="paso" style="display: none;">
+            <h2>3. Mide tu Logro</h2>
+            <p>Evalúa la nueva intensidad de tu emoción después de enfocarte en la actividad de cosecha.</p>
+            <label id="valor-final" class="slider-label">Nivel de Intensidad: 5</label>
+            <input type="range" min="1" max="10" value="5" id="slider-final" oninput="document.getElementById('valor-final').textContent = 'Nivel de Intensidad: ' + this.value;">
+            <button id="btn-evaluar" class="btn btn-evaluar" onclick="mostrarResultados()">Ver Logro de Control</button>
+        </div>
+
+        <div id="resultado-final">
+            <h3>🎉 ¡Logro de Control Alcanzado!</h3>
+            <p>Tu control emocional se mide por la diferencia entre intensidades. ¡Demostraste que puedes dirigir tu enfoque!</p>
+            <div id="detalles-logro"></div>
+            <button class="btn btn-reiniciar" onclick="reiniciarJuego()">Volver a Empezar</button>
+        </div>
+    </div>
+
+    <script>
+        let intensidadInicial = 5;
+        let intensidadFinal = 5;
+        let timerInterval;
+        let timeLeft = 60;
+        let score = 0;
+        let isGameRunning = false;
+
+        const paso1 = document.getElementById('paso-1');
+        const paso2 = document.getElementById('paso-2');
+        const paso3 = document.getElementById('paso-3');
+        const resultadoFinal = document.getElementById('resultado-final');
+        const temporizadorDisplay = document.getElementById('temporizador-juego');
+        const puntuacionDisplay = document.getElementById('puntuacion-juego');
+        const instruccionDisplay = document.getElementById('instruccion-juego');
+        const contenedorCosecha = document.getElementById('contenedor-cosecha');
+        const btnContinuar = document.getElementById('btn-continuar');
+
+        // Configuración de las preguntas visuales (Cosechas)
+        const TIPOS_ELEMENTOS = {
+            Oveja: { emoji: '🐑', propiedad: 'animal' },
+            Globo: { emoji: '🎈', propiedad: 'objeto' },
+            Manzana: { emoji: '🍎', propiedad: 'fruta' },
+            Pez: { emoji: '🐠', propiedad: 'animal' },
+            Dado: { emoji: '🎲', propiedad: 'objeto' },
+            Fresa: { emoji: '🍓', propiedad: 'fruta' }
+        };
+        const PROPIEDADES = ['animal', 'objeto', 'fruta'];
+
+        let respuestaCorrectaPropiedad = 'animal'; 
+        let instruccionActual = "Instrucción: ¡Clica en la figura que es un animal!";
+        
+        // --- Funciones del Minijuego ---
+        function generarCosecha() {
+            if (!isGameRunning) return;
+
+            // 1. Determinar la propiedad a buscar aleatoriamente (ej: 'fruta')
+            respuestaCorrectaPropiedad = PROPIEDADES[Math.floor(Math.random() * PROPIEDADES.length)];
+            
+            // 2. Determinar las figuras a mostrar
+            const elementosArray = Object.values(TIPOS_ELEMENTOS);
+            // Tomar 4 elementos al azar
+            let figurasVisibles = elementosArray.sort(() => Math.random() - 0.5).slice(0, 4); 
+
+            // 3. Asegurar que al menos un elemento correcto exista
+            let tieneCorrecto = figurasVisibles.some(fig => fig.propiedad === respuestaCorrectaPropiedad);
+            if (!tieneCorrecto) {
+                // Si no hay, forzar a que uno de los 4 sea el correcto
+                const correcto = elementosArray.find(fig => fig.propiedad === respuestaCorrectaPropiedad);
+                figurasVisibles[Math.floor(Math.random() * 4)] = correcto;
+            }
+
+            instruccionActual = `Instrucción: ¡Selecciona la figura que es ${respuestaCorrectaPropiedad}!`;
+            instruccionDisplay.innerHTML = instruccionActual;
+            
+            contenedorCosecha.innerHTML = ''; 
+
+            figurasVisibles.forEach(figura => {
+                const button = document.createElement('div');
+                button.className = 'elemento-cosecha';
+                button.innerHTML = figura.emoji;
+                button.onclick = () => verificarRespuesta(figura.propiedad, respuestaCorrectaPropiedad);
+                contenedorCosecha.appendChild(button);
+            });
+        }
+
+        function verificarRespuesta(seleccion, correcta) {
+            if (!isGameRunning) return;
+
+            if (seleccion === correcta) {
+                score++;
+                puntuacionDisplay.textContent = `Aciertos: ${score}`;
+            }
+            // Si es incorrecto, no hay penalización, pero se debe seguir forzando la concentración.
+            generarCosecha();
+        }
+
+
+        // --- Lógica del Flujo ---
+        function actualizarVisibilidad(show1, show2, show3, showFinal) {
+            paso1.style.display = show1 ? 'block' : 'none';
+            paso2.style.display = show2 ? 'block' : 'none';
+            paso3.style.display = show3 ? 'block' : 'none';
+            resultadoFinal.style.display = showFinal ? 'block' : 'none';
+        }
+
+        function comenzarJuego() {
+            intensidadInicial = parseInt(document.getElementById('slider-inicio').value);
+            actualizarVisibilidad(false, true, false, false);
+
+            score = 0;
+            puntuacionDisplay.textContent = `Aciertos: 0`;
+            btnContinuar.style.display = 'none';
+            isGameRunning = true;
+            timeLeft = 60;
+            
+            iniciarJuegoTiempo();
+            generarCosecha(); // Inicia el primer nivel del juego
+        }
+
+        function iniciarJuegoTiempo() {
+            temporizadorDisplay.style.color = '#e74c3c';
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                let minutos = Math.floor(timeLeft / 60);
+                let segundos = timeLeft % 60;
+                temporizadorDisplay.textContent = `${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finalizarJuegoTiempo();
+                }
+            }, 1000);
+        }
+
+        function finalizarJuegoTiempo() {
+            isGameRunning = false;
+            temporizadorDisplay.textContent = '¡TIEMPO!';
+            contenedorCosecha.innerHTML = `<p style="color:#2c3e50; font-size:1.2em;">Has completado la Cosecha con **${score} aciertos**.</p>`;
+            instruccionDisplay.innerHTML = '¡Actividad de Enfoque completada!';
+            btnContinuar.style.display = 'block';
+        }
+
+        function finalizarJuego() {
+            actualizarVisibilidad(false, false, true, false);
+        }
+
+        function mostrarResultados() {
+            intensidadFinal = parseInt(document.getElementById('slider-final').value);
+            actualizarVisibilidad(false, false, false, true);
+
+            const reduccion = intensidadInicial - intensidadFinal;
+            let mensajeLogro = '';
+            let colorLogro = '#2ecc71';
+            let tituloLogro = '🎉 ¡Logro de Control Alcanzado!';
+
+            if (reduccion > 0) {
+                mensajeLogro = `¡Felicidades! Lograste reducir ${reduccion} puntos de intensidad. El enfoque en el juego (${score} aciertos) fue el interruptor.`;
+            } else if (reduccion === 0) {
+                mensajeLogro = `La intensidad no cambió. Intenta concentrarte más en el juego la próxima vez o prueba una actividad física si la intensidad es alta.`;
+                colorLogro = '#f39c12';
+                tituloLogro = '⚠️ Resultado Neutro: Más Enfoque Necesario.';
+            } else {
+                mensajeLogro = `La emoción aumentó. El juego te pudo frustrar. Prueba ahora una pausa de respiración profunda.`;
+                colorLogro = '#e74c3c';
+                tituloLogro = '🚨 ¡Atención! Análisis Requerido.';
+            }
+
+            document.getElementById('resultado-final').style.borderColor = colorLogro;
+            document.getElementById('resultado-final').querySelector('h3').textContent = tituloLogro;
+
+            document.getElementById('detalles-logro').innerHTML = `
+                <p><strong>Intensidad Inicial:</strong> ${intensidadInicial}/10</p>
+                <p><strong>Intensidad Final:</strong> ${intensidadFinal}/10</p>
+                <p><strong>Reducción Neta:</strong> ${reduccion}</p>
+                <p style="margin-top:10px; font-weight: 500;">${mensajeLogro}</p>
+            `;
+        }
+
+        function reiniciarJuego() {
+            clearInterval(timerInterval);
+            timeLeft = 60;
+            isGameRunning = false;
+            temporizadorDisplay.textContent = '01:00';
+            document.getElementById('slider-inicio').value = 5;
+            document.getElementById('slider-final').value = 5;
+            document.getElementById('valor-inicial').textContent = 'Nivel de Intensidad: 5';
+            document.getElementById('valor-final').textContent = 'Nivel de Intensidad: 5';
+            actualizarVisibilidad(true, false, false, false);
+        }
+
+        reiniciarJuego();
+    </script>
+
+</body>
+</html>
